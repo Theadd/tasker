@@ -1,0 +1,20 @@
+{
+  "name": "tasker",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Tasks for remote fetching data periodically",
+  "dependencies": {
+    "requestify": "^0.1.16",
+    "inherits": "^2.0.1"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "main": "index.js",
+  "repository": "",
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "tape": "2.x"
+  }
+}
