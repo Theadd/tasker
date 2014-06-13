@@ -5,7 +5,8 @@
   "description": "Tasks for remote fetching data periodically",
   "dependencies": {
     "requestify": "^0.1.16",
-    "inherits": "^2.0.1"
+    "inherits": "^2.0.1",
+    "nt": "^0.4.0"
   },
   "scripts": {
     "test": "tape test/*.js"

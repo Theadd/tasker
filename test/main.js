@@ -1,36 +1,13 @@
-var Parser = require('../').Parser
+var Task = require('../').Task
 var test = require('tape')
 
 var parser = null
 
-/*
-function createTask (cb) {
-
-  parser = new Parser('http://ext.bitsnoop.com/export/b3_e003_trackers.txt.gz', 10000)
-  parser.on('error', function (err) {
-    t.fail(err.message)
-  })
-  parser.on('data', function (data) {
-    cb(null, data)
-  })
-  parser.start()
-
-}
-
-test('tasker: fetch url', function (t) {
-  t.plan(1)
-
-  createTask(function (err, data) {
-    t.error(err)
-  })
-})
-
-*/
 
 test('tasker: fetch url', function (t) {
   t.plan(2)
 
-  parser = new Parser('http://ext.bitsnoop.com/export/b3_e003_trackers.txt.gz', 0)
+  parser = new Task('https://raw.githubusercontent.com/Theadd/tasker/master/test/samples/sample.txt.gz', 0)
   parser.on('error', function (err) {
     t.fail(err)
   })

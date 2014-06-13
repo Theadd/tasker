@@ -2,7 +2,7 @@
  * Created by Theadd on 6/5/14.
  */
 
-exports.Parser = Parser
+exports.Task = Task
 
 var fs = require('fs')
 var http = require('http')
@@ -11,10 +11,11 @@ var zlib = require('zlib')
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var requestify = require('requestify')
+var nt = require('nt')
 
-inherits(Parser, EventEmitter)
+inherits(Task, EventEmitter)
 
-function Parser (target, interval) {
+function Task (target, interval) {
   var self = this
   EventEmitter.call(self)
   self._target = target
@@ -22,13 +23,14 @@ function Parser (target, interval) {
   self.setStatus('initialized')
 }
 
-Parser.prototype.setStatus = function (state) {
+Task.prototype.setStatus = function (state) {
   var self = this
   self.status = state || 'undefined'
   //console.log(self.status)
+  self.emit('status', self.status)
 }
 
-Parser.prototype.start = function () {
+Task.prototype.start = function () {
   var self = this
   self.setStatus('started')
 
@@ -44,20 +46,20 @@ Parser.prototype.start = function () {
   }
 }
 
-Parser.prototype.stop = function () {
+Task.prototype.stop = function () {
   var self = this
   self.setStatus('stopped')
 
   self.setInterval(0)
 }
 
-Parser.prototype.use = function (_url) {
+Task.prototype.use = function (_url) {
   var self = this
   self.url = _url || self.url
   self._get()
 }
 
-Parser.prototype.setInterval = function (intervalMs) {
+Task.prototype.setInterval = function (intervalMs) {
   var self = this
   if (self._interval) {
     clearInterval(self._interval)
@@ -69,7 +71,7 @@ Parser.prototype.setInterval = function (intervalMs) {
   }
 }
 
-Parser.prototype._gunzip = function (buf) {
+Task.prototype._gunzip = function (buf) {
   var self = this
   self.setStatus('decompressing')
 
@@ -83,18 +85,20 @@ Parser.prototype._gunzip = function (buf) {
   })
 }
 
-Parser.prototype._get = function () {
+Task.prototype._get = function () {
   var self = this
   self.setStatus('downloading')
 
-  if (self.url.indexOf('.gz') === -1) {
+  if (self.url.substr(-3) == '.gz') {
     self._getContent()
+  } else if (self.url.substr(-8) == '.torrent') {
+    self._getTorrent()
   } else {
     self._getFile()
   }
 }
 
-Parser.prototype._getFile = function () {
+Task.prototype._getFile = function () {
   var self = this
   self.setStatus('downloading')
 
@@ -126,13 +130,26 @@ Parser.prototype._getFile = function () {
   })
 }
 
-Parser.prototype._getContent = function () {
+Task.prototype._getContent = function () {
   var self = this
 
   requestify.get(self.url).then(function(response) {
 
     response.getBody();
     self.emit('data', response.body)
+    self.setStatus('standby')
+  })
+}
+
+Task.prototype._getTorrent = function () {
+  var self = this
+
+  nt.read(self.url, function(err, torrent) {
+    if (err) {
+      self.emit('error', err)
+    } else {
+      self.emit('data', torrent)
+    }
     self.setStatus('standby')
   })
 }
