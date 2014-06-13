@@ -12,6 +12,7 @@ var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var requestify = require('requestify')
 var nt = require('nt')
+var TorrentUtils = require('./lib/TorrentUtils')
 
 inherits(Task, EventEmitter)
 
@@ -148,7 +149,7 @@ Task.prototype._getTorrent = function () {
     if (err) {
       self.emit('error', err)
     } else {
-      self.emit('data', torrent)
+      self.emit('data', TorrentUtils.getEverything(torrent.metadata))
     }
     self.setStatus('standby')
   })
