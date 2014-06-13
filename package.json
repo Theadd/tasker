@@ -1,8 +1,7 @@
 {
   "name": "tasker",
-  "private": true,
-  "version": "0.0.1",
-  "description": "Tasks for remote fetching data periodically",
+  "version": "0.1.0",
+  "description": "Tasks for periodically remote fetching data",
   "dependencies": {
     "requestify": "^0.1.16",
     "inherits": "^2.0.1",
@@ -12,9 +11,27 @@
     "test": "tape test/*.js"
   },
   "main": "index.js",
-  "repository": "",
-  "author": "",
-  "license": "",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Theadd/tasker.git"
+  },
+  "author": {
+    "name": "Theadd",
+    "url": "https://github.com/Theadd/"
+  },
+  "bugs": {
+    "url": "https://github.com/Theadd/tasker/issues"
+  },
+  "homepage": "https://github.com/Theadd/tasker",
+  "keywords": [
+    "task",
+    "remote",
+    "fetch",
+    "parse",
+    "torrent",
+    "gzip"
+  ],
+  "license": "GPL",
   "devDependencies": {
     "tape": "2.x"
   }
