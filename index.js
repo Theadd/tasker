@@ -91,11 +91,11 @@ Task.prototype._get = function () {
   self.setStatus('downloading')
 
   if (self.url.substr(-3) == '.gz') {
-    self._getContent()
+    self._getFile()
   } else if (self.url.substr(-8) == '.torrent') {
     self._getTorrent()
   } else {
-    self._getFile()
+    self._getContent()
   }
 }
 
