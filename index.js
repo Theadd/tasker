@@ -99,11 +99,16 @@ Task.prototype._get = function () {
 }
 
 Task.prototype._getFile = function () {
-  var self = this
+  var self = this,
+    url_host = url.parse(self.url).host,
+    port_match = url_host.match(/:([0-9]+)/),
+    url_port = (port_match) ? port_match[1] : 80
+
+  url_host = (port_match) ? url_host.replace(/:[0-9]+/, '') : url_host
 
   var options = {
-    host: url.parse(self.url).host,
-    port: 80,
+    host: url_host,
+    port: url_port,
     path: url.parse(self.url).pathname
   }
 
@@ -132,13 +137,12 @@ Task.prototype._getFile = function () {
             var fs = require('fs')
             fs.writeFile(path, buf, function (err) {
               if (err) return console.log(err)
-              console.log('Written to disk')
 
               var sys = require('sys')
               var exec = require('child_process').exec
               var child = exec('gunzip ' + path, function (error, stdout, stderr) {
                 if (error != null) return console.log(error)
-                console.log('decompressed in ' + path.substr(0, path.length - 3))
+                self.setStatus('decompressed')
                 self._streamLocalFile(path.substr(0, path.length - 3))
               })
             })
@@ -148,6 +152,8 @@ Task.prototype._getFile = function () {
           self._gunzip(buf) //decompress in memory
         }
       })
+  }).on('error', function(err) {
+    self.emit('error', err)
   })
 }
 
@@ -205,5 +211,12 @@ Task.prototype._streamLocalFile = function (filename) {
       self._numLines = 0
       self.setStatus('standby')
     }
+    fs.unlink(filename, function (err) {
+      if (err) {
+        self.emit('error', err)
+      } else {
+        console.log('Successfully deleted ' + filename) //TODO: remove
+      }
+    });
   })
 }
