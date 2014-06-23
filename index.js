@@ -162,7 +162,7 @@ Task.prototype._getContent = function () {
 
   requestify.get(self.url).then(function(response) {
 
-    response.getBody();
+    response.getBody()
     self.emit('data', response.body)
     self.setStatus('standby')
   })
@@ -197,7 +197,7 @@ Task.prototype._streamLocalFile = function (filename) {
   rl.on('line', function(line) {
     self._lines += line + "\n"
     self._numLines++
-    if (self._numLines >= 100) {
+    if (self._numLines >= 1000) {
       self.emit('data', self._lines)
       self._lines = ''
       self._numLines = 0
@@ -212,11 +212,7 @@ Task.prototype._streamLocalFile = function (filename) {
       self.setStatus('standby')
     }
     fs.unlink(filename, function (err) {
-      if (err) {
-        self.emit('error', err)
-      } else {
-        console.log('Successfully deleted ' + filename) //TODO: remove
-      }
-    });
+      if (err) self.emit('error', err)
+    })
   })
 }
