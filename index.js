@@ -27,7 +27,6 @@ function Task (target, interval) {
 Task.prototype.setStatus = function (state) {
   var self = this
   self.status = state || 'undefined'
-  //console.log(self.status)
   self.emit('status', self.status)
 }
 
@@ -101,7 +100,6 @@ Task.prototype._get = function () {
 
 Task.prototype._getFile = function () {
   var self = this
-  self.setStatus('downloading')
 
   var options = {
     host: url.parse(self.url).host,
@@ -125,8 +123,30 @@ Task.prototype._getFile = function () {
           pos += data[i].length
         }
         self.setStatus('downloaded')
+        if (buf.length > 10000000) {  //For files bigger than ~10MB decompress in disk
+          var tmp = require('tmp')
 
-        self._gunzip(buf)
+          tmp.file({ prefix: 'task-', postfix: '.gz' }, function _tempFileCreated(err, path, fd) {
+            if (err) throw err
+
+            var fs = require('fs')
+            fs.writeFile(path, buf, function (err) {
+              if (err) return console.log(err)
+              console.log('Written to disk')
+
+              var sys = require('sys')
+              var exec = require('child_process').exec
+              var child = exec('gunzip ' + path, function (error, stdout, stderr) {
+                if (error != null) return console.log(error)
+                console.log('decompressed in ' + path.substr(0, path.length - 3))
+                self._streamLocalFile(path.substr(0, path.length - 3))
+              })
+            })
+          })
+
+        } else {
+          self._gunzip(buf) //decompress in memory
+        }
       })
   })
 }
@@ -152,5 +172,38 @@ Task.prototype._getTorrent = function () {
       self.emit('data', TorrentUtils.getEverything(torrent.metadata))
     }
     self.setStatus('standby')
+  })
+}
+
+Task.prototype._streamLocalFile = function (filename) {
+  var self = this
+  var fs = require('fs')
+  var readline = require('readline')
+  var stream = require('stream')
+
+  var instream = fs.createReadStream(filename)
+  var outstream = new stream
+  var rl = readline.createInterface(instream, outstream)
+
+  self._lines = ''
+  self._numLines = 0
+
+  rl.on('line', function(line) {
+    self._lines += line + "\n"
+    self._numLines++
+    if (self._numLines >= 100) {
+      self.emit('data', self._lines)
+      self._lines = ''
+      self._numLines = 0
+    }
+  })
+
+  rl.on('close', function() {
+    if (self._numLines) {
+      self.emit('data', self._lines)
+      self._lines = ''
+      self._numLines = 0
+      self.setStatus('standby')
+    }
   })
 }
