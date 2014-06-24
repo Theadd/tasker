@@ -181,11 +181,13 @@ Task.prototype._streamLocalFile = function (filename) {
 
   self._lines = ''
   self._numLines = 0
+  self._totalNumLines = 0
 
   rl.on('line', function(line) {
     self._lines += line + "\n"
     self._numLines++
     if (self._numLines >= 1000) {
+      self._totalNumLines += self._numLines
       self.emit('data', self._lines)
       self._lines = ''
       self._numLines = 0
@@ -194,6 +196,7 @@ Task.prototype._streamLocalFile = function (filename) {
 
   rl.on('close', function() {
     if (self._numLines) {
+      self._totalNumLines += self._numLines
       self.emit('data', self._lines)
       self._lines = ''
       self._numLines = 0
