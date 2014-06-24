@@ -99,6 +99,11 @@ Task.prototype._get = function () {
 }
 
 Task.prototype._getFile = function () {
+  var fs = require('fs')
+  var tmp = require('tmp')
+  var sys = require('sys')
+  var exec = require('child_process').exec
+
   var self = this,
     url_host = url.parse(self.url).host,
     port_match = url_host.match(/:([0-9]+)/),
@@ -113,45 +118,28 @@ Task.prototype._getFile = function () {
   }
 
   http.get(options, function(res) {
-    var data = [], dataLen = 0
+    tmp.file({ prefix: 'task-', postfix: '.gz' }, function _tempFileCreated(err, path, fd) {
+      if (err) {
+        self.emit('error', err)
+      } else {
+        var file = fs.createWriteStream(path)
+        res.on('data', function(chunk) {
+          file.write(chunk)
 
-    res.on('data', function(chunk) {
-
-      data.push(chunk)
-      dataLen += chunk.length
-
-    }).on('end', function() {
-        var buf = new Buffer(dataLen)
-
-        for (var i=0, len = data.length, pos = 0; i < len; i++) {
-          data[i].copy(buf, pos)
-          pos += data[i].length
-        }
-        self.setStatus('downloaded')
-        if (buf.length > 10000000) {  //For files bigger than ~10MB decompress in disk
-          var tmp = require('tmp')
-
-          tmp.file({ prefix: 'task-', postfix: '.gz' }, function _tempFileCreated(err, path, fd) {
-            if (err) throw err
-
-            var fs = require('fs')
-            fs.writeFile(path, buf, function (err) {
-              if (err) return console.log(err)
-
-              var sys = require('sys')
-              var exec = require('child_process').exec
-              var child = exec('gunzip ' + path, function (error, stdout, stderr) {
-                if (error != null) return console.log(error)
-                self.setStatus('decompressed')
-                self._streamLocalFile(path.substr(0, path.length - 3))
-              })
-            })
+        }).on('end', function() {
+          file.end()
+          self.setStatus('downloaded')
+          var child = exec('gunzip ' + path, function (error, stdout, stderr) {
+            if (error != null) {
+              self.emit('error', error)
+            } else {
+              self.setStatus('decompressed')
+              self._streamLocalFile(path.substr(0, path.length - 3))
+            }
           })
-
-        } else {
-          self._gunzip(buf) //decompress in memory
-        }
-      })
+        })
+      }
+    })
   }).on('error', function(err) {
     self.emit('error', err)
   })
