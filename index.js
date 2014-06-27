@@ -32,15 +32,18 @@ Task.prototype.setStatus = function (state) {
 
 Task.prototype.start = function () {
   var self = this
-  self.setStatus('started')
+  if (self.status == 'standby' || self.status == 'initialized' || self.status == 'stopped') {
+    self.setStatus('standby')
 
-  if (typeof self._target != 'string') {
-    self._target()
+    if (typeof self._target != 'string') {
+      self._target()
+    } else {
+      self.url = self._target
+      self._get()
+    }
   } else {
-    self.url = self._target
-    self._get()
+    console.log("Avoid overlapping task from status: " + self.status)
   }
-
   if (!self._interval) {
     self.setInterval(self._intervalMs)
   }
@@ -79,7 +82,7 @@ Task.prototype._gunzip = function (buf) {
     if (!err) {
       self.emit('data', buffer.toString())
     } else {
-      self.emit('error', err)
+      self._error(err)
     }
     self.setStatus('standby')
   })
@@ -120,7 +123,7 @@ Task.prototype._getFile = function () {
   http.get(options, function(res) {
     tmp.file({ prefix: 'task-', postfix: '.gz' }, function _tempFileCreated(err, path, fd) {
       if (err) {
-        self.emit('error', err)
+        self._error(err)
       } else {
         var file = fs.createWriteStream(path)
         res.on('data', function(chunk) {
@@ -131,7 +134,7 @@ Task.prototype._getFile = function () {
           self.setStatus('downloaded')
           var child = exec('gunzip ' + path, function (error, stdout, stderr) {
             if (error != null) {
-              self.emit('error', error)
+              self._error(error)
             } else {
               self.setStatus('decompressed')
               self._streamLocalFile(path.substr(0, path.length - 3))
@@ -141,7 +144,7 @@ Task.prototype._getFile = function () {
       }
     })
   }).on('error', function(err) {
-    self.emit('error', err)
+    self._error(err)
   })
 }
 
@@ -161,7 +164,7 @@ Task.prototype._getTorrent = function () {
 
   nt.read(self.url, function(err, torrent) {
     if (err) {
-      self.emit('error', err)
+      self._error(err)
     } else {
       self.emit('data', TorrentUtils.getEverything(torrent.metadata))
     }
@@ -203,7 +206,13 @@ Task.prototype._streamLocalFile = function (filename) {
       self.setStatus('standby')
     }
     fs.unlink(filename, function (err) {
-      if (err) self.emit('error', err)
+      if (err) self._error(err)
     })
   })
+}
+
+Task.prototype._error = function (err) {
+  var self = this
+  self.setStatus('standby')
+  self.emit('error', err)
 }
