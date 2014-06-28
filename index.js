@@ -42,7 +42,7 @@ Task.prototype.start = function () {
       self._get()
     }
   } else {
-    console.log("Avoid overlapping task from status: " + self.status)
+    //console.log("Avoid overlapping task from status: " + self.status)
   }
   if (!self._interval) {
     self.setInterval(self._intervalMs)
