@@ -156,6 +156,8 @@ Task.prototype._getContent = function () {
     response.getBody()
     self.emit('data', response.body)
     self.setStatus('standby')
+  }, function(error) {
+    self._error(error)
   })
 }
 
