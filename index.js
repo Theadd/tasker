@@ -7,12 +7,11 @@ exports.Task = Task
 var fs = require('fs')
 var http = require('http')
 var url = require('url')
-var zlib = require('zlib')
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var requestify = require('requestify')
-var nt = require('nt')
 var TorrentUtils = require('./lib/TorrentUtils')
+var readTorrent = require('read-torrent')
 
 inherits(Task, EventEmitter)
 
@@ -72,20 +71,6 @@ Task.prototype.setInterval = function (intervalMs) {
   if (self._intervalMs) {
     self._interval = setInterval(self.start.bind(self), self._intervalMs)
   }
-}
-
-Task.prototype._gunzip = function (buf) {
-  var self = this
-  self.setStatus('decompressing')
-
-  zlib.gunzip(buf, function(err, buffer) {
-    if (!err) {
-      self.emit('data', buffer.toString())
-    } else {
-      self._error(err)
-    }
-    self.setStatus('standby')
-  })
 }
 
 Task.prototype._get = function () {
@@ -164,11 +149,11 @@ Task.prototype._getContent = function () {
 Task.prototype._getTorrent = function () {
   var self = this
 
-  nt.read(self.url, function(err, torrent) {
+  readTorrent(self.url, function(err, torrent) {
     if (err) {
       self._error(err)
     } else {
-      self.emit('data', TorrentUtils.getEverything(torrent.metadata))
+      self.emit('data', TorrentUtils.getEverything(torrent))
     }
     self.setStatus('standby')
   })

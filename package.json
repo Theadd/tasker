@@ -1,12 +1,12 @@
 {
   "name": "tasker",
-  "version": "0.1.1",
-  "description": "Tasks for periodically remote fetching data",
+  "version": "0.2.0",
+  "description": "Tasks for periodically fetching remote data",
   "dependencies": {
     "requestify": "^0.1.16",
     "inherits": "^2.0.1",
-    "nt": "^0.4.0",
-    "tmp": "0.0.23"
+    "tmp": "0.0.23",
+    "read-torrent": "^1.0.0"
   },
   "scripts": {
     "test": "tape test/*.js"

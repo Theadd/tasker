@@ -1,7 +1,6 @@
 var Task = require('../').Task
 var test = require('tape')
 
-
 test('tasker: fetch url', function (t) {
   t.plan(2)
 
