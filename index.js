@@ -12,6 +12,8 @@ var EventEmitter = require('events').EventEmitter
 var requestify = require('requestify')
 var TorrentUtils = require('./lib/TorrentUtils')
 var readTorrent = require('read-torrent')
+var NodeCache = require('node-cache')
+Task.prototype.requestsCache = null
 
 inherits(Task, EventEmitter)
 
@@ -20,6 +22,7 @@ function Task (target, interval) {
   EventEmitter.call(self)
   self._target = target
   self._intervalMs = interval
+  self._useCache = false
   self.setStatus('initialized')
 }
 
@@ -136,14 +139,23 @@ Task.prototype._getFile = function () {
 Task.prototype._getContent = function () {
   var self = this
 
-  requestify.get(self.url).then(function(response) {
+  var cached = (self._useCache) ? self.requestsCache.get(self.url) : {}
+  if (!cached.length) {
+    requestify.get(self.url).then(function(response) {
 
-    response.getBody()
-    self.emit('data', response.body)
+      response.getBody()
+      self.emit('data', response.body)
+      if (self._useCache) {
+        self.requestsCache.set(self.url, response.body)
+      }
+      self.setStatus('standby')
+    }, function(error) {
+      self._error(error)
+    })
+  } else {
+    self.emit('data', cached)
     self.setStatus('standby')
-  }, function(error) {
-    self._error(error)
-  })
+  }
 }
 
 Task.prototype._getTorrent = function () {
@@ -202,4 +214,10 @@ Task.prototype._error = function (err) {
   var self = this
   self.setStatus('standby')
   self.emit('error', err)
+}
+
+Task.prototype.setCache = function (ttl, checkinterval) {
+  var self = this
+  self._useCache = true
+  self.requestsCache = new NodeCache( { stdTTL: ttl, checkperiod: checkinterval } )
 }

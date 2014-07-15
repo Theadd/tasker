@@ -6,7 +6,8 @@
     "requestify": "^0.1.16",
     "inherits": "^2.0.1",
     "tmp": "0.0.23",
-    "read-torrent": "^1.0.0"
+    "read-torrent": "^1.0.0",
+    "node-cache": "^1.0.0"
   },
   "scripts": {
     "test": "tape test/*.js"
