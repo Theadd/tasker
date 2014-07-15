@@ -118,31 +118,30 @@ Task.prototype._getFile = function () {
           file.write(chunk)
 
         }).on('end', function() {
-          file.end()
-          self.setStatus('downloaded')
-          var child = exec('gunzip ' + path, function (error, stdout, stderr) {
-            if (error != null) {
-              self._error(error)
-            } else {
-              self.setStatus('decompressed')
-              self._streamLocalFile(path.substr(0, path.length - 3))
-            }
+            file.end()
+            self.setStatus('downloaded')
+            var child = exec('gunzip ' + path, function (error, stdout, stderr) {
+              if (error != null) {
+                self._error(error)
+              } else {
+                self.setStatus('decompressed')
+                self._streamLocalFile(path.substr(0, path.length - 3))
+              }
+            })
           })
-        })
       }
     })
   }).on('error', function(err) {
-    self._error(err)
-  })
+      self._error(err)
+    })
 }
 
 Task.prototype._getContent = function () {
-  var self = this
+  var self = this,
+    cached = (self._useCache) ? self.requestsCache.get(self.url) : {}
 
-  var cached = (self._useCache) ? self.requestsCache.get(self.url) : {}
-  if (!cached.length) {
+  if (typeof cached[self.url] === "undefined") {
     requestify.get(self.url).then(function(response) {
-
       response.getBody()
       self.emit('data', response.body)
       if (self._useCache) {
@@ -153,7 +152,7 @@ Task.prototype._getContent = function () {
       self._error(error)
     })
   } else {
-    self.emit('data', cached)
+    self.emit('data', cached[self.url])
     self.setStatus('standby')
   }
 }
