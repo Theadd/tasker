@@ -170,6 +170,14 @@ Task.prototype._getTorrent = function () {
   })
 }
 
+Task.prototype.resume = function () {
+  var self = this
+  if (typeof self._rl !== "undefined") {
+    self._rl.resume()
+    self._startTime = new Date().getTime()
+  }
+}
+
 Task.prototype._streamLocalFile = function (filename) {
   var self = this
   var fs = require('fs')
@@ -178,16 +186,17 @@ Task.prototype._streamLocalFile = function (filename) {
 
   var instream = fs.createReadStream(filename)
   var outstream = new stream
-  var rl = readline.createInterface(instream, outstream)
+  self._rl = readline.createInterface(instream, outstream)
 
   self._lines = ''
   self._numLines = 0
   self._totalNumLines = 0
 
-  rl.on('line', function(line) {
+  self._rl.on('line', function(line) {
     self._lines += line + "\n"
     self._numLines++
     if (self._numLines >= 1000) {
+      self._rl.pause()
       self._totalNumLines += self._numLines
       self.emit('data', self._lines)
       self._lines = ''
@@ -195,7 +204,7 @@ Task.prototype._streamLocalFile = function (filename) {
     }
   })
 
-  rl.on('close', function() {
+  self._rl.on('close', function() {
     if (self._numLines) {
       self._totalNumLines += self._numLines
       self.emit('data', self._lines)
