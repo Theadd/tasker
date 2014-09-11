@@ -10,7 +10,6 @@ var url = require('url')
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var requestify = require('requestify')
-var TorrentUtils = require('./lib/TorrentUtils')
 var readTorrent = require('read-torrent')
 var NodeCache = require('node-cache')
 Task.prototype.requestsCache = null
@@ -164,7 +163,7 @@ Task.prototype._getTorrent = function () {
     if (err) {
       self._error(err)
     } else {
-      self.emit('data', TorrentUtils.getEverything(torrent))
+      self.emit('data', torrent)
     }
     self.setStatus('standby')
   })
