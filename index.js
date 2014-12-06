@@ -75,6 +75,10 @@ Task.prototype.setInterval = function (intervalMs) {
   }
 }
 
+Task.prototype.getInterval = function () {
+  return this._intervalMs
+}
+
 Task.prototype._get = function () {
   var self = this
   self.setStatus('downloading')
